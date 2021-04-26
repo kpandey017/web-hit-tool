@@ -150,7 +150,7 @@ exports.navigateUrl=  (tasks)=> {
     }
     (async () => {
         const browser = await puppeteer.launch({ headless: false ,
-     args: ['--disable-setuid-sandbox', '--no-sandbox']})
+     args: []})
         const page = await browser.newPage()
         await page.setViewport({ width: 1280, height: 1800 });
 
