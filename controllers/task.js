@@ -149,7 +149,7 @@ exports.navigateUrl=  (tasks)=> {
         });
     }
     (async () => {
-        const browser = await puppeteer.launch({ headless: false ,
+        const browser = await puppeteer.launch({ headless: true ,
      args: []})
         const page = await browser.newPage()
         await page.setViewport({ width: 1280, height: 1800 });
