@@ -4,7 +4,7 @@ var Task = require('../models/task');
 var TaskLog = require('../models/tasklog');
 var https = require('https');
 const request = require('request');
-
+const deviceOptions=["Blackberry PlayBook", "web", "web", "web", "web", "BlackBerry Z30", "Galaxy Note 3", "Galaxy Note 3 landscape", "Galaxy Note II", "Galaxy Note II landscape", "Galaxy S III", "Galaxy S III landscape", "Galaxy S5", "Galaxy S5 landscape", "iPad", "iPad landscape", "iPad Mini", "iPad Mini landscape", "iPad Pro", "iPad Pro landscape", "iPhone 6", "iPhone 6 landscape", "iPhone 6 Plus", "iPhone 6 Plus landscape", "iPhone 7", "iPhone 7 landscape", "iPhone 7 Plus", "iPhone 7 Plus landscape", "iPhone 8", "iPhone 8 landscape", "iPhone 8 Plus", "iPhone 8 Plus landscape", "iPhone SE", "iPhone SE landscape", "iPhone X", "iPhone X landscape", "iPhone XR", "iPhone XR landscape", "iPhone 11", "iPhone 11 landscape", "iPhone 11 Pro", "iPhone 11 Pro landscape", "iPhone 11 Pro Max", "iPhone 11 Pro Max landscape", "JioPhone 2", "JioPhone 2 landscape", "Kindle Fire HDX", "Kindle Fire HDX landscape", "LG Optimus L70", "LG Optimus L70 landscape", "Microsoft Lumia 550", "Microsoft Lumia 950", "Microsoft Lumia 950 landscape", "Nexus 10", "Nexus 10 landscape", "Nexus 5", "Nexus 5X", "Nexus 6", "Nexus 6 landscape", "Nexus 6P", "Nexus 6P landscape", "Nexus 7", "Nexus 7 landscape", "Nokia Lumia 520", "Nokia N9", "Nokia N9 landscape", "Pixel 2", "Pixel 2 XL", "Pixel 2 XL landscape", "web", "web", "web", "web", "web"];
 exports.get_all_live_tasks =  async (callback)=> {
     Task.find({}, async (err, tasks) => {
         callback(tasks);
@@ -40,13 +40,17 @@ exports.navigateUrl=  (tasks)=> {
         });
     }
     (async () => {
-        const browser = await puppeteer.launch({ headless: false ,
-     args: ['--no-sandbox']})
+        const browser = await puppeteer.launch({ headless: false , args: ['--no-sandbox']})
         const page = await browser.newPage();
-        await page.setViewport({ width: 1280, height: 1800 });
-        tasks.push({});
-        tasks.push({});
-        tasks.push({});
+        var deviceName = deviceOptions[Math.floor(Math.random() * deviceOptions.length)];
+        if(deviceName=="web"){
+            await page.setViewport({ width: 1280, height: 1800 });
+        }else{
+            const device = puppeteer.devices[deviceName];
+            await page.emulate(device);
+        }
+        
+        
         for (let index = 0; index < tasks.length; index++) {
             try {
                 const task = tasks[index];
@@ -67,7 +71,7 @@ exports.navigateUrl=  (tasks)=> {
             }            
         }
         console.log("Complted");
-        https.get('https://fnubuntu16centralindia.azurewebsites.net/api/Function1?name=ubuntu-16-central-india&group=ubuntu-16-central-india&code=1Q8ONwmdNSCb6bKevw/XKwo1s7Ca10WYtpiotWQy15HZeu9XBM7gBg==', res => {console.log("Triggered Func")});
+        https.get('https://fnubuntu16centralindia.azurewebsites.net/api/FnVMRestart?name=ubuntu-16-central-india&group=ubuntu-16-central-india&code=RxS7ZGPLsomYicEFgTSzxDBYL6ETHFIkCIJG/eMNzI/dDFVyLV1T9A==', res => {console.log("Triggered Func")});
         
         await browser.close();
     }
