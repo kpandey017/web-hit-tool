@@ -3,10 +3,12 @@ const mongoose = require('mongoose');
 var Task = require('../models/task');
 var TaskLog = require('../models/tasklog');
 var https = require('https');
+let config = require('../config.json');
+
 const request = require('request');
 const deviceOptions=["Blackberry PlayBook", "web", "web", "web", "web", "BlackBerry Z30", "Galaxy Note 3", "Galaxy Note 3 landscape", "Galaxy Note II", "Galaxy Note II landscape", "Galaxy S III", "Galaxy S III landscape", "Galaxy S5", "Galaxy S5 landscape", "iPad", "iPad landscape", "iPad Mini", "iPad Mini landscape", "iPad Pro", "iPad Pro landscape", "iPhone 6", "iPhone 6 landscape", "iPhone 6 Plus", "iPhone 6 Plus landscape", "iPhone 7", "iPhone 7 landscape", "iPhone 7 Plus", "iPhone 7 Plus landscape", "iPhone 8", "iPhone 8 landscape", "iPhone 8 Plus", "iPhone 8 Plus landscape", "iPhone SE", "iPhone SE landscape", "iPhone X", "iPhone X landscape", "iPhone XR", "iPhone XR landscape", "iPhone 11", "iPhone 11 landscape", "iPhone 11 Pro", "iPhone 11 Pro landscape", "iPhone 11 Pro Max", "iPhone 11 Pro Max landscape", "JioPhone 2", "JioPhone 2 landscape", "Kindle Fire HDX", "Kindle Fire HDX landscape", "LG Optimus L70", "LG Optimus L70 landscape", "Microsoft Lumia 550", "Microsoft Lumia 950", "Microsoft Lumia 950 landscape", "Nexus 10", "Nexus 10 landscape", "Nexus 5", "Nexus 5X", "Nexus 6", "Nexus 6 landscape", "Nexus 6P", "Nexus 6P landscape", "Nexus 7", "Nexus 7 landscape", "Nokia Lumia 520", "Nokia N9", "Nokia N9 landscape", "Pixel 2", "Pixel 2 XL", "Pixel 2 XL landscape", "web", "web", "web", "web", "web"];
 exports.get_all_live_tasks =  async (callback)=> {
-    Task.find({}, async (err, tasks) => {
+    Task.find({ "region": { "$in": config.region } }, async (err, tasks) => {
         callback(tasks);
     })
 };
@@ -39,6 +41,20 @@ exports.navigateUrl=  (tasks)=> {
             });
         });
     }
+    var updateTaskStatus =(task)=>{ 
+        var dateToCheck=task.lastVisit;
+        var actualDate =new Date();
+        var isSameDay = (dateToCheck && dateToCheck.getDate() === actualDate.getDate() && dateToCheck.getMonth() === actualDate.getMonth() && dateToCheck.getFullYear() === actualDate.getFullYear());
+        var dataSet={}
+        if(isSameDay){
+            dataSet={ $inc: {'totalVisit': 1,'todayVisit':1 },$set:{'lastVisit':actualDate} };
+        }
+        else{
+            dataSet={ $inc: {'totalVisit': 1 },$set:{'lastVisit':actualDate,'todayVisit':1} };
+        }
+        Task.findOneAndUpdate({ uid: task.uid }, dataSet, {new: true },(err, response)=> { if (err) {console.log(err)} })
+    }
+
     (async () => {
         const browser = await puppeteer.launch({ headless: false , args: ['--no-sandbox']})
         const page = await browser.newPage();
@@ -65,13 +81,14 @@ exports.navigateUrl=  (tasks)=> {
                     await page.waitForTimeout(randomBetween(3,4)*1000);
                     await autoScroll(page);
                     await page.waitForTimeout(randomBetween(5,7)*1000);
-                }    
+                }
+                updateTaskStatus(task);    
             } catch (error) {
                 console.log(error);
             }            
         }
-        console.log("Complted");
-        https.get('https://fnubuntu16centralindia.azurewebsites.net/api/FnVMRestart?name=ubuntu-16-central-india&group=ubuntu-16-central-india&code=RxS7ZGPLsomYicEFgTSzxDBYL6ETHFIkCIJG/eMNzI/dDFVyLV1T9A==', res => {console.log("Triggered Func")});
+        console.log("Completed");
+        https.get('https://fnubuntu16centralindia.azurewebsites.net/api/FnVMRestart?name='+config.name+'&group='+config.resourceGroup+'&code=RxS7ZGPLsomYicEFgTSzxDBYL6ETHFIkCIJG/eMNzI/dDFVyLV1T9A==', res => {console.log("Triggered Func")});
         
         await browser.close();
     }
