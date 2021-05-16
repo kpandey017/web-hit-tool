@@ -55,9 +55,10 @@ exports.navigateUrl=  (tasks)=> {
         Task.findOneAndUpdate({ uid: task.uid }, dataSet, {new: true },(err, response)=> { if (err) {console.log(err)} })
     }
 
-    (async () => {
+    var  navigate= async(task)=>{
         const browser = await puppeteer.launch({ headless: false , args: ['--no-sandbox']})
         const page = await browser.newPage();
+        await page.setDefaultNavigationTimeout(50000);
         var deviceName = deviceOptions[Math.floor(Math.random() * deviceOptions.length)];
         if(deviceName=="web"){
             await page.setViewport({ width: 1280, height: 1800 });
@@ -67,31 +68,35 @@ exports.navigateUrl=  (tasks)=> {
         }
         
         
-        for (let index = 0; index < tasks.length; index++) {
-            try {
-                const task = tasks[index];
-                await page.goto(task.url);
-                await page.waitForTimeout(randomBetween(3,6)*1000);
+        try {
+            await page.goto(task.url);
+            await page.waitForTimeout(randomBetween(3,7)*1000);
+            await autoScroll(page);
+            await page.waitForTimeout(randomBetween(5,8)*1000);
+            const hrefs = await page.$$eval('a', as => as.map(a => a.href));
+            if(hrefs != null && hrefs != undefined && hrefs.length>0){
+                var links= Math.floor(randomBetween(0,hrefs.length-1));
+                await page.goto(hrefs[links]);
+                await page.waitForTimeout(randomBetween(3,4)*1000);
                 await autoScroll(page);
-                await page.waitForTimeout(randomBetween(5,10)*1000);
-                const hrefs = await page.$$eval('a', as => as.map(a => a.href));
-                if(hrefs != null && hrefs != undefined && hrefs.length>0){
-                    var links= Math.floor(randomBetween(0,hrefs.length-1));
-                    await page.goto(hrefs[links]);
-                    await page.waitForTimeout(randomBetween(3,4)*1000);
-                    await autoScroll(page);
-                    await page.waitForTimeout(randomBetween(5,7)*1000);
-                }
-                updateTaskStatus(task);    
-            } catch (error) {
-                console.log(error);
-            }            
-        }
-        console.log("Completed");
-        https.get('https://fnubuntu16centralindia.azurewebsites.net/api/FnVMRestart?name='+config.name+'&group='+config.resourceGroup+'&code=RxS7ZGPLsomYicEFgTSzxDBYL6ETHFIkCIJG/eMNzI/dDFVyLV1T9A==', res => {console.log("Triggered Func")});
-        
+                await page.waitForTimeout(randomBetween(5,7)*1000);
+            }
+            await updateTaskStatus(task);    
+        } catch (error) {
+            console.log(error);
+        }            
         await browser.close();
+            Promise.resolve();
     }
-)();
-    
+
+    var allTaskPromise=[];
+    for (let index = 0; index < tasks.length; index++) {
+        const task = tasks[index];
+        allTaskPromise.push(navigate(task));
+    }
+    (async () => {
+        await Promise.all(allTaskPromise);
+        console.log("All Done");
+        //https.get('https://fnubuntu16centralindia.azurewebsites.net/api/FnVMRestart?name='+config.name+'&group='+config.resourceGroup+'&code=RxS7ZGPLsomYicEFgTSzxDBYL6ETHFIkCIJG/eMNzI/dDFVyLV1T9A==', res => {console.log("Triggered Func")});
+    })();    
 }
