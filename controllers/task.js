@@ -97,6 +97,6 @@ exports.navigateUrl=  (tasks)=> {
     (async () => {
         await Promise.all(allTaskPromise);
         console.log("All Done");
-        //https.get('https://fnubuntu16centralindia.azurewebsites.net/api/FnVMRestart?name='+config.name+'&group='+config.resourceGroup+'&code=RxS7ZGPLsomYicEFgTSzxDBYL6ETHFIkCIJG/eMNzI/dDFVyLV1T9A==', res => {console.log("Triggered Func")});
+        https.get('https://fnubuntu16centralindia.azurewebsites.net/api/FnVMRestart?name='+config.name+'&group='+config.resourceGroup+'&code=RxS7ZGPLsomYicEFgTSzxDBYL6ETHFIkCIJG/eMNzI/dDFVyLV1T9A==', res => {console.log("Triggered Func")});
     })();    
 }
