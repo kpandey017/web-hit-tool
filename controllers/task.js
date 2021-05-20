@@ -41,6 +41,40 @@ exports.navigateUrl=  (tasks)=> {
             });
         });
     }
+
+    var adClick= async (page) =>{
+        const rect = await page.evaluate(el => {
+                let validFrames=[];
+                let iframes = document.querySelectorAll('iframe');
+                if(iframes && iframes.length>0){
+                    iframes.forEach(frame => {
+                        if(frame.parentElement.offsetHeight > 0)
+                        validFrames.push(frame);                        
+                    });
+                }
+                if(validFrames.length>0){
+                    var randomBetween1=(min, max) =>{
+                        if (min < 0) {
+                            return min + Math.random() * (Math.abs(min)+max);
+                        }else {
+                            return min + Math.random() * max;
+                        }
+                    };
+                    var randomIndex= Math.floor(randomBetween1(0,validFrames.length-1));
+                    validFrames[randomIndex].parentElement.scrollIntoView();
+                    return validFrames[randomIndex].src;
+
+                }
+
+                return null;
+        });
+
+        if(rect){
+            var adFrame = await page.frames().find(frame => frame.url() === rect);
+            adFrame.click('a');    
+        }
+      }
+
     var updateTaskStatus =(task)=>{ 
         var dateToCheck=task.lastVisit;
         var actualDate =new Date();
@@ -56,7 +90,7 @@ exports.navigateUrl=  (tasks)=> {
     }
 
     var  navigate= async(task)=>{
-        const browser = await puppeteer.launch({ headless: false , args: ['--no-sandbox']})
+        const browser = await puppeteer.launch({ headless: false , args: ['--no-sandbox', '--disable-web-security', '--disable-features=IsolateOrigins,site-per-process']})
         const page = await browser.newPage();
         await page.setDefaultNavigationTimeout(50000);
         var deviceName = deviceOptions[Math.floor(Math.random() * deviceOptions.length)];
@@ -65,16 +99,25 @@ exports.navigateUrl=  (tasks)=> {
         }else{
             const device = puppeteer.devices[deviceName];
             await page.emulate(device);
-        }
+        }        
         
         
         try {
             await page.goto(task.url);
             await page.waitForTimeout(randomBetween(3,7)*1000);
-            await autoScroll(page);
-            await page.waitForTimeout(randomBetween(5,8)*1000);
+            await autoScroll(page);            
+            await page.waitForTimeout(randomBetween(5,8)*1000);          
             const hrefs = await page.$$eval('a', as => as.map(a => a.href));
-            if(hrefs != null && hrefs != undefined && hrefs.length>0){
+
+            var randomNo=Math.floor(randomBetween(1,55));
+            
+            if(randomNo>33&randomNo<=35){
+                await page.waitForTimeout(randomBetween(2,4)*1000);
+                await adClick(page);
+                await page.waitForTimeout(randomBetween(3,4)*1000);
+                await autoScroll(page);
+            }            
+           else if(hrefs != null && hrefs != undefined && hrefs.length>0){
                 var links= Math.floor(randomBetween(0,hrefs.length-1));
                 await page.goto(hrefs[links]);
                 await page.waitForTimeout(randomBetween(3,4)*1000);
