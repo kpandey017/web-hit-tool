@@ -6,6 +6,18 @@ var https = require('https');
 let config = require('../config.json');
 
 const request = require('request');
+
+
+var msRestAzure = require('ms-rest-azure');
+var ResourceManagementClient = require('azure-arm-resource').ResourceManagementClient;
+var ComputeManagementClient = require('azure-arm-compute');
+var clientId = "bd413287-57bc-44ae-8fd9-938c5e3020b9";
+var domain = "dfb2636d-0c0a-4ae5-9bcc-d442ee98ca87";
+var secret = "-uJCwEXTCOG-_I.RU05tAD1jwCjKYK9A.E";
+var subscriptionId = "98c798e8-052c-4251-a40a-c585aedf2133";
+
+
+
 const deviceOptions=["Blackberry PlayBook", "web", "web", "web", "web", "BlackBerry Z30", "Galaxy Note 3", "Galaxy Note 3 landscape", "Galaxy Note II", "Galaxy Note II landscape", "Galaxy S III", "Galaxy S III landscape", "Galaxy S5", "Galaxy S5 landscape", "iPad", "iPad landscape", "iPad Mini", "iPad Mini landscape", "iPad Pro", "iPad Pro landscape", "iPhone 6", "iPhone 6 landscape", "iPhone 6 Plus", "iPhone 6 Plus landscape", "iPhone 7", "iPhone 7 landscape", "iPhone 7 Plus", "iPhone 7 Plus landscape", "iPhone 8", "iPhone 8 landscape", "iPhone 8 Plus", "iPhone 8 Plus landscape", "iPhone SE", "iPhone SE landscape", "iPhone X", "iPhone X landscape", "iPhone XR", "iPhone XR landscape", "iPhone 11", "iPhone 11 landscape", "iPhone 11 Pro", "iPhone 11 Pro landscape", "iPhone 11 Pro Max", "iPhone 11 Pro Max landscape", "JioPhone 2", "JioPhone 2 landscape", "Kindle Fire HDX", "Kindle Fire HDX landscape", "LG Optimus L70", "LG Optimus L70 landscape", "Microsoft Lumia 550", "Microsoft Lumia 950", "Microsoft Lumia 950 landscape", "Nexus 10", "Nexus 10 landscape", "Nexus 5", "Nexus 5X", "Nexus 6", "Nexus 6 landscape", "Nexus 6P", "Nexus 6P landscape", "Nexus 7", "Nexus 7 landscape", "Nokia Lumia 520", "Nokia N9", "Nokia N9 landscape", "Pixel 2", "Pixel 2 XL", "Pixel 2 XL landscape", "web", "web", "web", "web", "web"];
 exports.get_all_live_tasks =  async (callback)=> {
     Task.find({ "region": { "$in": config.region } }, async (err, tasks) => {
@@ -73,7 +85,21 @@ exports.navigateUrl=  (tasks)=> {
             var adFrame = await page.frames().find(frame => frame.url() === rect);
             adFrame.click('a');    
         }
-      }
+    }
+
+    var dellocateVM = ()=>{
+        msRestAzure.loginWithServicePrincipalSecret(clientId, secret, domain, function (err, credentials) {
+            if (err) return console.log(err);
+            resourceClient = new ResourceManagementClient(credentials, subscriptionId);
+            computeClient = new ComputeManagementClient(credentials, subscriptionId);
+            computeClient.virtualMachines.deallocate(config.resourceGroup,config.name,function (err, result) {
+              if (err) return console.log('Error occured in deleting the virtual machine: ' + config.name + '\n');
+              console.log('Successfully deleted the virtual machine: ' + config.name);
+              console.log('\nDeleting the resource group can take few minutes, so please be patient :).');
+             
+            });
+          });
+    }
 
     var updateTaskStatus =(task)=>{ 
         var dateToCheck=task.lastVisit;
@@ -110,14 +136,14 @@ exports.navigateUrl=  (tasks)=> {
             const hrefs = await page.$$eval('a', as => as.map(a => a.href));
 
             var randomNo=Math.floor(randomBetween(1,55));
-            
+
             if(randomNo>33&randomNo<=35){
                 await page.waitForTimeout(randomBetween(2,4)*1000);
                 await adClick(page);
                 await page.waitForTimeout(randomBetween(3,4)*1000);
                 await autoScroll(page);
             }            
-           else if(hrefs != null && hrefs != undefined && hrefs.length>0){
+            else if(hrefs != null && hrefs != undefined && hrefs.length>0){
                 var links= Math.floor(randomBetween(0,hrefs.length-1));
                 await page.goto(hrefs[links]);
                 await page.waitForTimeout(randomBetween(3,4)*1000);
@@ -140,6 +166,7 @@ exports.navigateUrl=  (tasks)=> {
     (async () => {
         await Promise.all(allTaskPromise);
         console.log("All Done");
-        https.get('https://fnubuntu16centralindia.azurewebsites.net/api/FnVMRestart?name='+config.name+'&group='+config.resourceGroup+'&code=RxS7ZGPLsomYicEFgTSzxDBYL6ETHFIkCIJG/eMNzI/dDFVyLV1T9A==', res => {console.log("Triggered Func")});
+        dellocateVM();
+        //https.get('https://fnubuntu16centralindia.azurewebsites.net/api/FnVMRestart?name='+config.name+'&group='+config.resourceGroup+'&code=RxS7ZGPLsomYicEFgTSzxDBYL6ETHFIkCIJG/eMNzI/dDFVyLV1T9A==', res => {console.log("Triggered Func")});
     })();    
 }

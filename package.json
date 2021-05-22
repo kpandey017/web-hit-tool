@@ -11,6 +11,11 @@
   "dependencies": {
     "mongoose": "^5.12.4",
     "puppeteer": "^8.0.0",
-    "request": "^2.88.2"
+    "request": "^2.88.2",
+    "azure-arm-compute": "^0.18.1",
+    "azure-arm-resource": "^1.4.4-preview",
+    "azure-arm-storage": "^0.13.1-preview",
+    "azure-arm-network": "^0.13.2",
+    "ms-rest-azure": "^1.14.3"
   }
 }
