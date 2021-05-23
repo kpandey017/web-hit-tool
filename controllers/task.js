@@ -60,7 +60,7 @@ exports.navigateUrl=  (tasks)=> {
                 let iframes = document.querySelectorAll('iframe');
                 if(iframes && iframes.length>0){
                     iframes.forEach(frame => {
-                        if(frame.parentElement.offsetHeight > 0)
+                        if(frame.parentElement.offsetHeight > 0 && frame.clientHeight>0 && !frame.src.includes("recap"))
                         validFrames.push(frame);                        
                     });
                 }
