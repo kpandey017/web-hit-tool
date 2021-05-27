@@ -115,18 +115,7 @@ exports.navigateUrl=  (tasks)=> {
         Task.findOneAndUpdate({ uid: task.uid }, dataSet, {new: true },(err, response)=> { if (err) {console.log(err)} })
     }
 
-    var  navigate= async(task)=>{
-        const browser = await puppeteer.launch({ headless: false , args: ['--no-sandbox', '--disable-web-security', '--disable-features=IsolateOrigins,site-per-process']})
-        const page = await browser.newPage();
-        await page.setDefaultNavigationTimeout(50000);
-        var deviceName = deviceOptions[Math.floor(Math.random() * deviceOptions.length)];
-        if(deviceName=="web"){
-            await page.setViewport({ width: 1280, height: 1800 });
-        }else{
-            const device = puppeteer.devices[deviceName];
-            await page.emulate(device);
-        }        
-        
+    var  navigate= async(task,page)=>{
         
         try {
             await page.goto(task.url);
@@ -154,18 +143,32 @@ exports.navigateUrl=  (tasks)=> {
         } catch (error) {
             console.log(error);
         }            
-        await browser.close();
-            Promise.resolve();
+        
     }
 
-    var allTaskPromise=[];
-    for (let index = 0; index < tasks.length; index++) {
-        const task = tasks[index];
-        allTaskPromise.push(navigate(task));
-    }
     (async () => {
-        await Promise.all(allTaskPromise);
+
+        const browser = await puppeteer.launch({ headless: false , args: ['--no-sandbox', '--disable-web-security', '--disable-features=IsolateOrigins,site-per-process']})
+        const page = await browser.newPage();
+        await page.setDefaultNavigationTimeout(50000);
+
+        var deviceName = deviceOptions[Math.floor(Math.random() * deviceOptions.length)];
+        if(deviceName=="web"){
+            await page.setViewport({ width: 1280, height: 1800 });
+        }else{
+            const device = puppeteer.devices[deviceName];
+            await page.emulate(device);
+        }  
+
+        for (let index = 0; index < tasks.length; index++) {
+            
+            const task = tasks[index];
+            await navigate(task,page);
+
+        }
         console.log("All Done");
+        await browser.close();
+        
         dellocateVM();
         //https.get('https://fnubuntu16centralindia.azurewebsites.net/api/FnVMRestart?name='+config.name+'&group='+config.resourceGroup+'&code=RxS7ZGPLsomYicEFgTSzxDBYL6ETHFIkCIJG/eMNzI/dDFVyLV1T9A==', res => {console.log("Triggered Func")});
     })();    
